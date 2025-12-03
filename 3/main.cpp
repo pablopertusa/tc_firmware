@@ -18,6 +18,7 @@ class Peripheral {
         enabled = false;
     }
     virtual void display() {
+        std::cout << "Pin: " << pin << std::endl;
         std::cout << "Peripheral en estado " << enabled << std::endl;
     }
 };
