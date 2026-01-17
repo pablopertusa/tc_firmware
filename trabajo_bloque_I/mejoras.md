@@ -1,1 +1,0 @@
-- Sé que se podría hacer con templates y hacer que cada máquina tenga su propia lista de estados, pero prefiero hacerlo así primero porque los templates aún me cuestan un poco.
