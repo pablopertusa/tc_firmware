@@ -99,6 +99,9 @@ void Propulsion::transition(OperationalMachine* op, char input) {
     else if (input == 'b') {
         op->setState(Braking::getInstance());
     }
+    else if (input == 'p') {
+        op->setState(Propulsion::getInstance());
+    }
     else {
         std::cout << "Input no válido para el estado actual" << std::endl;
     }
@@ -124,11 +127,14 @@ void Idle::exit(OperationalMachine* op) {
 }
 
 void Idle::transition(OperationalMachine* op, char input) {
-    if (input == 'p') {
-        op->setState(Propulsion::getInstance());
+    if (input == 'i') {
+        op->setState(Idle::getInstance());
     }
     else if (input == 'b') {
         op->setState(Braking::getInstance());
+    }
+    else if (input == 'p') {
+        op->setState(Propulsion::getInstance());
     }
     else {
         std::cout << "Input no válido para el estado actual" << std::endl;
@@ -157,11 +163,14 @@ void Braking::exit(OperationalMachine* op) {
 }
 
 void Braking::transition(OperationalMachine* op, char input) {
-    if (input == 'p') {
-        op->setState(Propulsion::getInstance());
-    }
-    else if (input == 'i') {
+    if (input == 'i') {
         op->setState(Idle::getInstance());
+    }
+    else if (input == 'b') {
+        op->setState(Braking::getInstance());
+    }
+    else if (input == 'p') {
+        op->setState(Propulsion::getInstance());
     }
     else {
         std::cout << "Input no válido para el estado actual" << std::endl;
