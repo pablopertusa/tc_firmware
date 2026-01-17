@@ -13,7 +13,6 @@ class PCUMachine {
 
     private:
     PCUState *currentState;
-    float usage;
 };
 
 class OperationalMachine {
@@ -23,8 +22,13 @@ class OperationalMachine {
     void setState(OperationalState &newState);
     void update();
     OperationalState* getCurrentState();
+    float check_speed();
+    float check_usage();
+    void set_speed(float s);
+    void set_usage(float u);
 
     private:
     OperationalState *currentState;
     float speed;
+    float usage;
 };

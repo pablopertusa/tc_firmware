@@ -10,6 +10,8 @@ int main() {
     std::cout << "--- PCU Machine Control ---" << std::endl;
     std::cout << "Introduce un caracter para transicionar (o 'q' para salir):" << std::endl;
 
+    machine.update();
+
     while (running) {
         std::cout << "\n> Esperando input: ";
         std::cin >> userInput;
