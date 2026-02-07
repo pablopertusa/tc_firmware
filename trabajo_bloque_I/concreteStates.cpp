@@ -1,6 +1,5 @@
 #include "concreteStates.h"
 #include "machines.h"
-#include "states.h"
 
 void Connecting::enter(PCUMachine *pcu) {
     std::cout << "Entrando a connecting" << std::endl;
@@ -56,7 +55,7 @@ void Fault::update(PCUMachine *pcu) {
 
 void Operational::enter(PCUMachine *pcu) {
     std::cout << "Entrando a Operational" << std::endl;
-    this->internalMachine = new OperationalMachine();
+    this->internalMachine = new OperationalMachine<char>();
 }
 
 void Operational::exit(PCUMachine *pcu) {
@@ -67,9 +66,12 @@ void Operational::exit(PCUMachine *pcu) {
 void Operational::transition(PCUMachine *pcu, char input) {
     this->internalMachine->transition(input);
 
-    // si se ha usado mucho se rompe
-    if (this->internalMachine->check_usage() >= 20) {
-        pcu->setState(Fault::getInstance());
+    auto* opMachine = dynamic_cast<OperationalMachine<char>*>(this->internalMachine);
+
+    if (opMachine) {
+        if (opMachine->check_usage() >= 20) {
+            pcu->setState(Fault::getInstance());
+        }
     }
 }
 
@@ -84,15 +86,15 @@ void Operational::update(PCUMachine *pcu) {
     std::cout << "- Uso = " << this->internalMachine->check_usage() << std::endl;
 }
 
-void Propulsion::enter(OperationalMachine* op) {
+void Propulsion::enter(PCUMachine* op) {
     std::cout << "Entrando a Propulsion" << std::endl;
 }
 
-void Propulsion::exit(OperationalMachine* op) {
+void Propulsion::exit(PCUMachine* op) {
     std::cout << "Saliendo de Propulsion" << std::endl;
 }
 
-void Propulsion::transition(OperationalMachine* op, char input) {
+void Propulsion::transition(PCUMachine* op, char input) {
     if (input == 'i') {
         op->setState(Idle::getInstance());
     }
@@ -107,26 +109,35 @@ void Propulsion::transition(OperationalMachine* op, char input) {
     }
 }
 
-void Propulsion::update(OperationalMachine* op) {
+void Propulsion::update(PCUMachine* op) {
     std::cout << "Actualmente estamos en Propulsion" << std::endl;
-    op->set_speed(op->check_speed() + 5);
-    op->set_usage(op->check_usage() + 2);
+    auto* opMachine = dynamic_cast<OperationalMachine<char>*>(op);
+
+    if (opMachine) {
+        if (opMachine->check_usage() >= 20) {
+            opMachine->set_speed(opMachine->check_speed() + 5);
+            opMachine->set_usage(opMachine->check_usage() + 2);
+        }
+    }
+    else {
+        std::cout << "problema haciendo el cast" << std::endl;
+    }
 }
 
-OperationalState& Propulsion::getInstance() {
+PCUState& Propulsion::getInstance() {
     static Propulsion singleton;
     return singleton;
 }
 
-void Idle::enter(OperationalMachine* op) {
+void Idle::enter(PCUMachine* op) {
     std::cout << "Entrando a Idle" << std::endl;
 }
 
-void Idle::exit(OperationalMachine* op) {
+void Idle::exit(PCUMachine* op) {
     std::cout << "Saliendo de Idle" << std::endl;
 }
 
-void Idle::transition(OperationalMachine* op, char input) {
+void Idle::transition(PCUMachine* op, char input) {
     if (input == 'i') {
         op->setState(Idle::getInstance());
     }
@@ -141,28 +152,32 @@ void Idle::transition(OperationalMachine* op, char input) {
     }
 }
 
-void Idle::update(OperationalMachine* op) {
+void Idle::update(PCUMachine* op) {
     std::cout << "Actualmente estamos en Idle" << std::endl;
-    if (op->check_speed() > 0) {
-        op->set_speed(op->check_speed() - 1);
+    auto *opMachine = dynamic_cast<OperationalMachine<char>*>(op); 
+    if (opMachine->check_speed() > 0) {
+        opMachine->set_speed(opMachine->check_speed() - 1);
     }
-    op->set_usage(op->check_usage() + 1);
+    else {
+        std::cout << "problema haciendo el cast" << std::endl;
+    }
+    opMachine->set_usage(opMachine->check_usage() + 1);
 }
 
-OperationalState& Idle::getInstance() {
+PCUState& Idle::getInstance() {
     static Idle singleton;
     return singleton;
 }
 
-void Braking::enter(OperationalMachine* op) {
+void Braking::enter(PCUMachine* op) {
     std::cout << "Entrando a Braking" << std::endl;
 }
 
-void Braking::exit(OperationalMachine* op) {
+void Braking::exit(PCUMachine* op) {
     std::cout << "Saliendo de Braking" << std::endl;
 }
 
-void Braking::transition(OperationalMachine* op, char input) {
+void Braking::transition(PCUMachine* op, char input) {
     if (input == 'i') {
         op->setState(Idle::getInstance());
     }
@@ -177,16 +192,20 @@ void Braking::transition(OperationalMachine* op, char input) {
     }
 }
 
-void Braking::update(OperationalMachine* op) {
+void Braking::update(PCUMachine* op) {
     std::cout << "Actualmente estamos en Braking" << std::endl;
-    op->set_speed(op->check_speed() - 5);
-    if (op->check_speed() < 0) {
-        op->set_speed(0.0);
+    auto *opMachine = dynamic_cast<OperationalMachine<char>*>(op); 
+    opMachine->set_speed(opMachine->check_speed() - 5);
+    if (opMachine->check_speed() < 0) {
+        opMachine->set_speed(0.0);
     }
-    op->set_usage(op->check_usage() + 3);
+    else {
+        std::cout << "problema haciendo el cast" << std::endl;
+    }
+    opMachine->set_usage(opMachine->check_usage() + 3);
 }
 
-OperationalState& Braking::getInstance() {
+PCUState& Braking::getInstance() {
     static Braking singleton;
     return singleton;
 }

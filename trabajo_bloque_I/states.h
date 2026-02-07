@@ -1,23 +1,14 @@
 #pragma once
 
-class PCUMachine;
-class OperationalMachine;
+template <typename T>
+class Machine;
 
-class PCUState {
+template <typename T>
+class State {
     public:
-    virtual void enter(PCUMachine *machine) = 0;
-    virtual void exit(PCUMachine *machine) = 0;
-    virtual void transition(PCUMachine *machine, char input) = 0;
-    virtual void update(PCUMachine *machine) = 0;
-    virtual ~PCUState() {}
+    virtual void enter(Machine<T> *machine) = 0;
+    virtual void exit(Machine<T> *machine) = 0;
+    virtual void transition(Machine<T> *machine, T input) = 0;
+    virtual void update(Machine<T> *machine) = 0;
+    virtual ~State() = default;
 };
-
-class OperationalState {
-    public:
-    virtual void enter(OperationalMachine *machine) = 0;
-    virtual void exit(OperationalMachine *machine) = 0;
-    virtual void transition(OperationalMachine *machine, char input) = 0;
-    virtual void update(OperationalMachine *machine) = 0;
-    virtual ~OperationalState() {}
-};
-

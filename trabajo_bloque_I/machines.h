@@ -1,34 +1,55 @@
 #pragma once
 
-class PCUState;
-class OperationalState;
+#include <iostream>
 
-class PCUMachine {
-    public:
-    PCUMachine();
-    void transition(char input);
-    void setState(PCUState &newState);
-    void update();
-    PCUState* getCurrentState();
+template <typename T>
+class State;
 
-    private:
-    PCUState *currentState;
+template <typename T>
+class Machine {
+protected:
+    State<T>* currentState;
+
+public:
+    Machine(); 
+    virtual ~Machine() = default;
+
+    virtual void setState(State<T>& newState) {
+        if (currentState) {
+            currentState->exit(this);
+        }
+        currentState = &newState;
+        currentState->enter(this);
+    }
+
+    virtual void transition(T input) {
+        if (currentState) {
+            currentState->transition(this, input);
+        }
+    }
+
+    virtual void update() {
+        if (currentState) {
+            currentState->update(this);
+        }
+    }
+
+    virtual State<T>* getCurrentState() {
+        return currentState;
+    }
 };
 
-class OperationalMachine {
-    public:
-    OperationalMachine();
-    void transition(char input);
-    void setState(OperationalState &newState);
-    void update();
-    OperationalState* getCurrentState();
-    float check_speed();
-    float check_usage();
-    void set_speed(float s);
-    void set_usage(float u);
-
-    private:
-    OperationalState *currentState;
+template <typename T>
+class OperationalMachine : public Machine<T> {
+private:
     float speed;
     float usage;
+
+public:
+    OperationalMachine();
+
+    float check_usage() { return usage; }
+    float check_speed() { return speed; }
+    void set_usage(float u) { usage = u; }
+    void set_speed(float s) { speed = s; }
 };
