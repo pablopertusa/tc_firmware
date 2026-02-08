@@ -9,7 +9,6 @@ template <typename T>
 class Machine {
 protected:
     State<T>* currentState;
-
 public:
     Machine(); 
     virtual ~Machine() = default;
@@ -17,6 +16,9 @@ public:
     virtual void setState(State<T>& newState) {
         if (currentState) {
             currentState->exit(this);
+        }
+        else {
+            std::cout << "ERROR: no hay estado actual" << std::endl;
         }
         currentState = &newState;
         currentState->enter(this);
@@ -26,11 +28,17 @@ public:
         if (currentState) {
             currentState->transition(this, input);
         }
+        else {
+            std::cout << "ERROR: no hay estado actual" << std::endl;
+        }
     }
 
     virtual void update() {
         if (currentState) {
             currentState->update(this);
+        }
+        else {
+            std::cout << "ERROR: no hay estado actual" << std::endl;
         }
     }
 

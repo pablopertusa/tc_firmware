@@ -64,15 +64,18 @@ void Operational::exit(PCUMachine *pcu) {
 }
 
 void Operational::transition(PCUMachine *pcu, char input) {
-    this->internalMachine->transition(input);
-
-    auto* opMachine = dynamic_cast<OperationalMachine<char>*>(this->internalMachine);
-
-    if (opMachine) {
-        if (opMachine->check_usage() >= 20) {
+    if (this->internalMachine) {
+        if (this->internalMachine->check_usage() >= 20) {
             pcu->setState(Fault::getInstance());
         }
+        else {
+            this->internalMachine->transition(input);
+        }
     }
+    else {
+        std::cout << "ERROR: no hay internal machine en operational" << std::endl;
+    }
+
 }
 
 PCUState& Operational::getInstance() {
@@ -114,13 +117,11 @@ void Propulsion::update(PCUMachine* op) {
     auto* opMachine = dynamic_cast<OperationalMachine<char>*>(op);
 
     if (opMachine) {
-        if (opMachine->check_usage() >= 20) {
-            opMachine->set_speed(opMachine->check_speed() + 5);
-            opMachine->set_usage(opMachine->check_usage() + 2);
-        }
+        opMachine->set_speed(opMachine->check_speed() + 5);
+        opMachine->set_usage(opMachine->check_usage() + 2);
     }
     else {
-        std::cout << "problema haciendo el cast" << std::endl;
+        std::cout << "ERROR (propulsion): problema haciendo el cast" << std::endl;
     }
 }
 
@@ -155,13 +156,15 @@ void Idle::transition(PCUMachine* op, char input) {
 void Idle::update(PCUMachine* op) {
     std::cout << "Actualmente estamos en Idle" << std::endl;
     auto *opMachine = dynamic_cast<OperationalMachine<char>*>(op); 
-    if (opMachine->check_speed() > 0) {
-        opMachine->set_speed(opMachine->check_speed() - 1);
+    if (opMachine) {
+        if (opMachine->check_speed() > 0) {
+            opMachine->set_speed(opMachine->check_speed() - 1);
+        }
+        opMachine->set_usage(opMachine->check_usage() + 1);
     }
     else {
-        std::cout << "problema haciendo el cast" << std::endl;
+        std::cout << "ERROR (idle): problema haciendo el cast" << std::endl;
     }
-    opMachine->set_usage(opMachine->check_usage() + 1);
 }
 
 PCUState& Idle::getInstance() {
@@ -195,14 +198,16 @@ void Braking::transition(PCUMachine* op, char input) {
 void Braking::update(PCUMachine* op) {
     std::cout << "Actualmente estamos en Braking" << std::endl;
     auto *opMachine = dynamic_cast<OperationalMachine<char>*>(op); 
-    opMachine->set_speed(opMachine->check_speed() - 5);
-    if (opMachine->check_speed() < 0) {
-        opMachine->set_speed(0.0);
+    if (opMachine) {
+        opMachine->set_speed(opMachine->check_speed() - 5);
+        if (opMachine->check_speed() < 0) {
+            opMachine->set_speed(0.0);
+        }
+        opMachine->set_usage(opMachine->check_usage() + 3);
     }
     else {
-        std::cout << "problema haciendo el cast" << std::endl;
+        std::cout << "ERROR (braking): problema haciendo el cast" << std::endl;
     }
-    opMachine->set_usage(opMachine->check_usage() + 3);
 }
 
 PCUState& Braking::getInstance() {

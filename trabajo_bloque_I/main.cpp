@@ -1,8 +1,9 @@
 #include <iostream>
-#include "concreteStates.h"
+#include "machines.h"
+#include "states.h"
 
 int main() {
-    PCUMachine machine;
+    Machine<char> machine;
     
     char userInput;
     bool running = true;

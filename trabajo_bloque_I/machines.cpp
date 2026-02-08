@@ -4,7 +4,7 @@
 
 template <typename T>
 Machine<T>::Machine() : currentState(nullptr) {
-    std::cout << "-- creada instancia de PCUMachine" << std::endl;
+    std::cout << "-- creada instancia genérica de PCUMachine" << std::endl;
     this->currentState = &Connecting::getInstance();
 }
 
