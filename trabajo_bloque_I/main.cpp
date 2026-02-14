@@ -1,9 +1,18 @@
 #include <iostream>
 #include "machines.h"
-#include "states.h"
+#include "concreteStates.h"
+
+void initPCU(Machine<char>& pcu) {
+    pcu.addState("Connecting", PCUFactory::CreateConnecting());
+    pcu.addState("Operational", PCUFactory::CreateOperational());
+    pcu.addState("Fault", PCUFactory::CreateFault());
+
+    pcu.setState("Connecting");
+}
 
 int main() {
     Machine<char> machine;
+    initPCU(machine);
     
     char userInput;
     bool running = true;

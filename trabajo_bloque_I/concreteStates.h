@@ -6,75 +6,114 @@
 using PCUState = State<char>;
 using PCUMachine = Machine<char>;
 
-class Connecting : public PCUState {
-public:
-    void enter(PCUMachine* pcu) override;
-    void exit(PCUMachine* pcu) override;
-    void transition(PCUMachine* pcu, char input) override;
-    void update(PCUMachine* pcu) override;
-    static PCUState& getInstance();
+namespace PCUFactory {
 
-private:
-    Connecting() { std::cout << "-- creada instancia de Connecting" << std::endl; }
-};
+    inline PCUState CreateConnecting() {
+        return PCUState(
+            [](PCUMachine* pcu, PCUMachine* nested) {
+                std::cout << "Entrando a connecting" << std::endl;
+            },
+            [](PCUMachine* pcu, PCUMachine* nested) {
+                std::cout << "Saliendo de connecting" << std::endl;
+            },
+            [](PCUMachine* pcu, PCUMachine* nested) {
+                std::cout << "Actualmente estamos en Connecting" << std::endl;
+            },
+            [](PCUMachine* pcu, PCUMachine* nested, char input) {
+                if (input == 'o') pcu->setState("Operational");
+                else std::cout << "Input no válido" << std::endl;
+            }
+        );
+    }
 
-class Operational : public PCUState {
-public:
-    void enter(PCUMachine* pcu) override;
-    void exit(PCUMachine* pcu) override;
-    void transition(PCUMachine* pcu, char input) override;
-    void update(PCUMachine* pcu) override;
-    static PCUState& getInstance();
+    inline PCUState CreatePropulsion() {
+        return PCUState(
+            nullptr, nullptr,
+            [](PCUMachine* pcu, PCUMachine* nested) {
+                auto* op = static_cast<OperationalMachine<char>*>(pcu);
+                op->set_speed(op->check_speed() + 5);
+                op->set_usage(op->check_usage() + 2);
+            },
+            [](PCUMachine* pcu, PCUMachine* n, char input) {
+                if (input == 'i') pcu->setState("Idle");
+                else if (input == 'b') pcu->setState("Braking");
+            }
+        );
+    }
 
-private:
-    Operational() { std::cout << "-- creada instancia de Operational" << std::endl; }
-    OperationalMachine<char>* internalMachine;
-};
+    inline PCUState CreateBraking() {
+        return PCUState(
+            nullptr, nullptr,
+            [](PCUMachine* pcu, PCUMachine* nested) {
+                auto* op = static_cast<OperationalMachine<char>*>(pcu);
+                op->set_speed(op->check_speed() - 5);
+                op->set_usage(op->check_usage() + 5);
+            },
+            [](PCUMachine* pcu, PCUMachine* n, char input) {
+                if (input == 'i') pcu->setState("Idle");
+                else if (input == 'p') pcu->setState("Propulsion");
+            }
+        );
+    }
 
-class Fault : public PCUState {
-public:
-    void enter(PCUMachine* pcu) override;
-    void exit(PCUMachine* pcu) override;
-    void transition(PCUMachine* pcu, char input) override;
-    void update(PCUMachine* pcu) override;
-    static PCUState& getInstance();
+    inline PCUState CreateIdle() {
+        return PCUState(
+            nullptr, nullptr,
+            [](PCUMachine* pcu, PCUMachine* nested) {
+                auto* op = static_cast<OperationalMachine<char>*>(pcu);
+                op->set_usage(op->check_usage() + 1);
+            },
+            [](PCUMachine* pcu, PCUMachine* n, char input) {
+                if (input == 'i') pcu->setState("Idle");
+                else if (input == 'p') pcu->setState("Propulsion");
+                else if(input == 'b') pcu->setState("Braking");
+            }
+        );
+    }
 
-private:
-    Fault() { std::cout << "-- creada instancia de Fault" << std::endl; }
-};
+    inline PCUState CreateOperational() {
 
-class Idle : public PCUState {
-public:
-    void enter(PCUMachine* pcu) override;
-    void exit(PCUMachine* pcu) override;
-    void transition(PCUMachine* pcu, char input) override;
-    void update(PCUMachine* pcu) override;
-    static PCUState& getInstance();
 
-private:
-    Idle() { std::cout << "-- creada instancia de Idle" << std::endl; }
-};
+        auto* internal = new OperationalMachine<char>(); 
+        internal->addState("Idle", PCUFactory::CreateIdle());
+        internal->addState("Propulsion", PCUFactory::CreatePropulsion());
+        internal->addState("Braking", PCUFactory::CreateBraking());
 
-class Propulsion : public PCUState {
-public:
-    void enter(PCUMachine* pcu) override;
-    void exit(PCUMachine* pcu) override;
-    void transition(PCUMachine* pcu, char input) override;
-    void update(PCUMachine* pcu) override;
-    static PCUState& getInstance();
+        internal->setState("Idle");
 
-private:
-    Propulsion() { std::cout << "-- creada instancia de Propulsion" << std::endl; }
-};
+        return PCUState(
+            [internal](PCUMachine* pcu, PCUMachine* nested) {
+                std::cout << "Entrando a Operational" << std::endl;
+            },
+            [internal](PCUMachine* pcu, PCUMachine* nested) {
+                std::cout << "Saliendo de Operational" << std::endl;
+                // cuidado con la memoria aquí
+            },
+            [internal](PCUMachine* pcu, PCUMachine* nested) {
+                internal->update();
+                std::cout << "- Velocidad = " << internal->check_speed() << std::endl;
+                std::cout << "- Uso = " << internal->check_usage() << std::endl;
+            },
+            [internal](PCUMachine* pcu, PCUMachine* nested, char input) {
+                if (internal->check_usage() >= 20) {
+                    pcu->setState("Fault");
+                } else {
+                    internal->transition(input);
+                }
+            },
+            internal
+        );
+    }
 
-class Braking : public PCUState {
-public:
-    void enter(PCUMachine* pcu) override;
-    void exit(PCUMachine* pcu) override;
-    void transition(PCUMachine* pcu, char input) override;
-    void update(PCUMachine* pcu) override;
-    static PCUState& getInstance();
+    inline PCUState CreateFault() {
+        return PCUState(
+            [](PCUMachine* pcu, PCUMachine* n) { std::cout << "Entrando a Fault" << std::endl; },
+            nullptr,
+            [](PCUMachine* pcu, PCUMachine* n) { std::cout << "Actualmente en Fault" << std::endl; },
+            [](PCUMachine* pcu, PCUMachine* n, char input) {
+                if (input == 'r') pcu->setState("Connecting");
+            }
+        );
+    }
 
-private:
-    Braking() { std::cout << "-- creada instancia de Braking" << std::endl; }
-};
+}

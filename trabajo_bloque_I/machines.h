@@ -1,6 +1,7 @@
 #pragma once
-
 #include <iostream>
+#include <map>
+#include <string>
 
 template <typename T>
 class State;
@@ -8,43 +9,43 @@ class State;
 template <typename T>
 class Machine {
 protected:
+    std::map<std::string, State<T>> states;
     State<T>* currentState;
+
 public:
-    Machine(); 
+    Machine() : currentState(nullptr) {
+        std::cout << "-- creada instancia genérica de Machine" << std::endl;
+    }
+    
     virtual ~Machine() = default;
 
-    virtual void setState(State<T>& newState) {
+    void addState(std::string name, State<T> state) {
+        states[name] = state;
+    }
+
+    virtual void setState(std::string stateName) {
+        if (states.find(stateName) == states.end()) {
+            std::cout << "ERROR: El estado " << stateName << " no existe." << std::endl;
+            return;
+        }
+
         if (currentState) {
             currentState->exit(this);
         }
-        else {
-            std::cout << "ERROR: no hay estado actual" << std::endl;
-        }
-        currentState = &newState;
+
+        currentState = &states[stateName];
         currentState->enter(this);
     }
 
     virtual void transition(T input) {
-        if (currentState) {
-            currentState->transition(this, input);
-        }
-        else {
-            std::cout << "ERROR: no hay estado actual" << std::endl;
-        }
+        if (currentState) currentState->transition(this, input);
     }
 
     virtual void update() {
-        if (currentState) {
-            currentState->update(this);
-        }
-        else {
-            std::cout << "ERROR: no hay estado actual" << std::endl;
-        }
+        if (currentState) currentState->update(this);
     }
 
-    virtual State<T>* getCurrentState() {
-        return currentState;
-    }
+    State<T>* getCurrentState() { return currentState; }
 };
 
 template <typename T>
@@ -54,7 +55,9 @@ private:
     float usage;
 
 public:
-    OperationalMachine();
+    OperationalMachine() : speed(0.0f), usage(0.0f) {
+        std::cout << "-- creada instancia de OperationalMachine" << std::endl;
+    }
 
     float check_usage() { return usage; }
     float check_speed() { return speed; }
