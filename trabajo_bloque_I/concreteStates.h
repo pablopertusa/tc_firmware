@@ -73,7 +73,6 @@ namespace PCUFactory {
 
     inline PCUState CreateOperational() {
 
-
         auto* internal = new OperationalMachine<char>(); 
         internal->addState("Idle", PCUFactory::CreateIdle());
         internal->addState("Propulsion", PCUFactory::CreatePropulsion());
@@ -82,23 +81,28 @@ namespace PCUFactory {
         internal->setState("Idle");
 
         return PCUState(
-            [internal](PCUMachine* pcu, PCUMachine* nested) {
+            [](PCUMachine* pcu, PCUMachine* nested) {
                 std::cout << "Entrando a Operational" << std::endl;
             },
-            [internal](PCUMachine* pcu, PCUMachine* nested) {
+            [](PCUMachine* pcu, PCUMachine* nested) {
                 std::cout << "Saliendo de Operational" << std::endl;
-                // cuidado con la memoria aquí
+                auto* op = static_cast<OperationalMachine<char>*>(nested);
+                op->set_speed(0.0);
+                op->set_usage(0.0);
+                op->setState("Idle");
             },
-            [internal](PCUMachine* pcu, PCUMachine* nested) {
-                internal->update();
-                std::cout << "- Velocidad = " << internal->check_speed() << std::endl;
-                std::cout << "- Uso = " << internal->check_usage() << std::endl;
+            [](PCUMachine* pcu, PCUMachine* nested) {
+                auto* op = static_cast<OperationalMachine<char>*>(nested);
+                op->update();
+                std::cout << "- Velocidad = " << op->check_speed() << std::endl;
+                std::cout << "- Uso = " << op->check_usage() << std::endl;
             },
-            [internal](PCUMachine* pcu, PCUMachine* nested, char input) {
-                if (internal->check_usage() >= 20) {
+            [](PCUMachine* pcu, PCUMachine* nested, char input) {
+                auto* op = static_cast<OperationalMachine<char>*>(nested);
+                if (op->check_usage() >= 20) {
                     pcu->setState("Fault");
                 } else {
-                    internal->transition(input);
+                    nested->transition(input);
                 }
             },
             internal
